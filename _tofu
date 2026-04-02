@@ -28,6 +28,7 @@ _tofu_cmds() {
     'show:Inspect state or plan'
     'state:Advanced state management'
     'taint:Manually mark a resource for recreation'
+    'test:Run tests'
     'untaint:Manually unmark a resource as tainted'
     'version:Prints the version'
     'workspace:Workspace management'
@@ -40,44 +41,71 @@ _tf_resource() {
   _message "OpenTofu resource address"
 }
 
+__tofu_warning_opts=(
+    '-compact-warnings[Show warnings in more compact form]'
+    '-consolidate-warnings=[Combine related warnings]: :(false true)'
+    '-consolidate-errors' \
+)
+
+__tofu_var_opts=(
+    '*-var=[Set a variable in the configuration]:assignment'
+    '*-var-file=[Set variables in the configuration from a file]:path:_files'
+)
+
+__tofu_plan_opts=(
+    '-destroy[Destroy all resources]'
+    '-refresh-only[Only update state to match remote resources]'
+    '-refresh=[Update state prior to checking for differences]: :(false true)'
+    '*-replace=[Force replacement of a resource]:resource:_tofu_resource'
+    '*-target=[Resource to target]:resource:_tf_resource'
+    '*-target-file=[File containing resources to target]:filename:_files'
+    '*-exclude=:resource:_tofu_resource'
+    '*-exclude-file=:filename:_files'
+    $__tofu_var_opts
+)
+# TODO: array for lock opts
+__tofu_lock_opts=(
+    '-lock=[Lock the state file]: :(false true)'
+    '-lock-timeout=[Duration to retry a state lock]:timeout'
+)
+
 _tofu-apply() {
-  _arguments \
-    '(:)-destroy[Destroy all resources]' \
-    '(:)-refresh-only[Only update state to match remote resources]' \
-    '(:)-refresh=[Update state prior to checking for differences]: :(false true)' \
-    '(:)*-replace=[Force replacement of a resource]:resource:_tofu_resource' \
-    '(:)*-target=[Resource to target]:resource:_tf_resource' \
-    '(:)*-var=[Set a variable in the configuration]:assignment' \
-    '(:)-var-file=[Set variables in the configuration from a file]:path:_files' \
-    '-auto-approve[Skip interactive approval of plan before applying]' \
-    '-compact-warnings[Show warnings in more compact form]' \
-    '-lock=[Lock the state file]: :(false true)' \
-    '-lock-timeout=[Duration to retry a state lock]:timeout' \
-    '-input=[Ask for input for variables if not directly set]: :(false true)' \
-    '-no-color[Suppress color in output]' \
-    '-parallelism=[Limit the number of parallel resource operations]:n' \
-    '::plan-file:_files'
+    _arguments \
+        + plan "(:)${^__tofu_plan_opts}" \
+        + general \
+        '-auto-approve[Skip interactive approval of plan before applying]' \
+        $__tofu_warning_opts \
+        '-concise' \
+        $__tofu_lock_opts \
+        '-input=[Ask for input for variables if not directly set]: :(false true)' \
+        '-json' \
+        '-show-sensitive' \
+        '-deprecation=[Type of deprecation warnings]: :(module:all module:local module:none)' \
+        '-no-color[Suppress color in output]' \
+        '-parallelism=[Limit the number of parallel resource operations]:n' \
+        '(plan)::plan-file:_files'
 }
 
 _tofu-console() {
   _arguments \
-    '-var=[Set a variable in the configuration]:assignment' \
-    '-var-file=[Set variables from a file]:path:_files'
+    $__tofu_var_opts \
+    $__tofu_warning_opts
 }
 
 _tofu-destroy() {
-  _arguments \
-    '-refresh=[Update state prior to checking for differences]: :(false true)' \
-    '*-target=[Resource to target]:resource:_tf_resource' \
-    '*-var=[Set a variable in the configuration]:assignment' \
-    '-var-file=[Set variables in the configuration from a file]:path:_files' \
-    '-auto-approve[Skip interactive approval of plan before applying]' \
-    '-compact-warnings[Show warnings in more compact form]' \
-    '-lock=[Lock the state file]: :(false true)' \
-    '-lock-timeout=[Duration to retry a state lock]:timeout' \
-    '-input=[Ask for input for variables if not directly set]: :(false true)' \
-    '-no-color[Suppress color in output]' \
-    '-parallelism=[Limit the number of parallel resource operations]:n' \
+    #TODO consolidate this with apply?
+    _arguments \
+        $__tofu_plan_opts \
+        '-auto-approve[Skip interactive approval of plan before applying]' \
+        $__tofu_warning_opts \
+        '-concise' \
+        $__tofu_lock_opts \
+        '-input=[Ask for input for variables if not directly set]: :(false true)' \
+        '-json' \
+        '-show-sensitive' \
+        '-deprecation=[Type of deprecation warnings]: :(module:all module:local module:none)' \
+        '-no-color[Suppress color in output]' \
+        '-parallelism=[Limit the number of parallel resource operations]:n' \
 }
 
 _tofu-fmt() {
@@ -86,6 +114,7 @@ _tofu-fmt() {
     '-write=[Whether to write to source files]: :(false true)' \
     '-diff[Display diffs of formatting changes]' \
     '-check[Check if the input is formatted]' \
+    '-no-color' \
     '-recursive[Also process files in subdirectories]' \
     '*::target:_files'
 }
@@ -93,7 +122,10 @@ _tofu-fmt() {
 _tofu-get() {
   _arguments \
     '-update[Check already-downloaded modules for available updates]' \
-    '-no-color[Disable text coloring in the output]'
+    '-no-color[Disable text coloring in the output]' \
+    '-test-directory=:path:_files -/' \
+    '-json' \
+    $__tofu_var_opts
 }
 
 _tofu-graph() {
@@ -101,7 +133,8 @@ _tofu-graph() {
     '-plan=[Use specified plan file]:tfplan:_files' \
     '-draw-cycles[Highlight any cycles in the graph]' \
     '-module-depth=[Specifies the depth of the modules to show in the output]:n' \
-    '-type=[Type of graph to output]:type:(plan plan-destroy apply validate input refresh)'
+    '-type=[Type of graph to output]:type:(plan plan-refresh-only plan-destroy apply)' \
+    $__tofu_var_opts
 }
 
 _tofu-import() {
@@ -109,12 +142,11 @@ _tofu-import() {
     '-config=[Path to config directory]:path:_files -/' \
     '-allow-missing-config[Allow import when no resource configuration exists]' \
     '-input=[Ask for input for variables if not directly set]: :(false true)' \
-    '-lock=[Lock the state file]: :(false true)' \
-    '-lock-timeout=[Duration to retry a state lock]:timeout' \
+    $__tofu_lock_opts \
     '-no-color[Suppress color in output]' \
-    '*-var=[Set a variable in the configuration]:assignment' \
-    '-var-file=[Set variables in the configuration from a file]:path:_files' \
     '-ignore-remote-version' \
+    $__tofu_var_opts \
+    $__tofu_warning_opts \
     ':resource:_tf_resource' \
     ':id'
 }
@@ -127,15 +159,18 @@ _tofu-init() {
     '-from-module=[Copy contents of the given module into target directory]:source:_files -/' \
     '-get=[Download any modules]: :(false true)' \
     '-input=[Ask for input if necessary]: :(false true)' \
-    '-lock=[Lock the state file]: :(false true)' \
-    '-lock-timeout=[Duration to retry a state lock]:timeout' \
+    $__tofu_lock_opts \
     '-no-color[Suppress color in output]' \
     '-plugin-dir=[Directory containing plugin binaries]:path:_files -/' \
     '-reconfigure[Reconfigure the backend]' \
     '-migrate-state[Attempt to migrate state to new backend]' \
     '-upgrade[Ignore previously installed objects and install latest]' \
     '-lockfile=[Set dependency lockfile mode]: :(readonly)' \
-    '-ignore-remote-version[Ignore checking that local and remote versions are compatible]'
+    '-ignore-remote-version[Ignore checking that local and remote versions are compatible]' \
+    '-test-directory=:path:_files -/' \
+    '-json' \
+    $__tofu_var_opts \
+    $__tofu_warning_opts
 }
 
 _tofu-login() {
@@ -149,26 +184,26 @@ _tofu-logout() {
 _tofu-output() {
   _arguments \
     '-no-color[Suppress color in output' \
+    '-json' \
     '-raw[Print raw string directly if possible]' \
+    '-show-sensitive' \
+    $__tofu_var_opts \
     ':output'
 }
 
 _tofu-plan() {
-  _arguments \
-    '-destroy[Generate plan to destroy all resources]' \
-    '-refresh-only[Just check that remote objects match current state]' \
-    '-refresh=[Update state prior to checking for differences]: :(false true)' \
-    '*-replace=[Force replacement of a resource]:resource:_tf_resource' \
-    '*-target=[Resource to target]:resource:_tf_resource' \
-    '*-var=[Set a variable in the configuration]:assignment' \
-    '-var-file=[Set variables in the configuration from a file]:path:_files' \
-    '-compact-warnings[Show warnings in more compact form]' \
-    '-detailed-exitcode[Return detailed exit codes when command exits]' \
+    _arguments \
+        $__tofu_plan_opts \
+        $__tofu_warning_opts \
+    '-detailed-exitcode' \
     '-input=[Ask for input for variables if not directly set]: :(false true)' \
-    '-lock=[Lock the state file]: :(false true)' \
-    '-lock-timeout=[Duration to retry a state lock]:timeout' \
+    '-generate-config-out=[Location for generated hcl]:path:_files' \
+    $__tofu_lock_opts \
     '-out=[Write a plan file to the given path]:path:_files' \
-    '-no-color[Suppress color in output]' \
+    '-no-color' \
+    '-concise' \
+    '-json' \
+    '-deprecation=: :(module:all module:local module:none)' \
     '-parallelism=[Limit the number of parallel resource operations]:n'
 }
 
@@ -182,7 +217,10 @@ _tofu-providers() {
     'schema:"Show schemas for the providers used"'
   )
 
-  _arguments -C ":subcommand: _describe -t commands subcommand subcommands" '*:: :->args' && ret=0
+  _arguments -C \
+      $__tofu_var_opts \
+      '-test-directory=:path:_files -/' \
+      ":subcommand: _describe -t commands subcommand subcommands" '*:: :->args' && ret=0
 
   if [[ $state = args ]]; then
     local oses=(linux darwin windows freebsd)
@@ -207,43 +245,55 @@ _tofu-providers() {
 
 _tofo-refresh() {
   _arguments \
-    '-compact-warnings[Show warnings in more compact form]' \
-    '-input=[Ask for input for variables if not directly set]: :(false true)' \
-    '-lock=[Lock the state file]: :(false true)' \
-    '-lock-timeout=[Duration to retry a state lock]:timeout' \
-    '-no-color[Suppress color in output]' \
-    '*-target=[Resource to target]:resource:_tf_resource' \
-    '*-var=[Set a variable in the configuration]:assignment' \
-    '-var-file=[Set variables in the configuration from a file]:path:_files'
-}
+      $__tofu_warning_opts \
+      '-input=[Ask for input for variables if not directly set]: :(false true)' \
+      $__tofu_lock_opts \
+      '-no-color[Suppress color in output]' \
+      '-concise' \
+      '*-target=[Resource to target]:resource:_tf_resource' \
+      '*-exclude=resource:_tf_resource' \
+      $__tofu_var_opts \
+      '-json'
+  }
 
 _tofu-show() {
-  _arguments \
-    '-no-color[Suppres color in output]' \
-    '-json[Print output as JSON]' \
-    '::path:_files'
+    _arguments \
+        '-no-color' \
+        '-json' \
+        '-show-sensitive' \
+        $__tofu_var_opts \
+        + '(target)' \
+        '-state[Show latest state snapshot]'  \
+        '-plan=[Show saved plan]:filename:_files' \
+        '-config[Show current configuration]'
 }
 
 _tofu-taint() {
   _arguments \
     '-allow-missing[Succeed even if the resource is missing]' \
-    '-lock=[Lock the state file]: :(false true)' \
-    '-lock-timeout=[Duration to retry a state lock]:timeout' \
+    $__tofu_lock_opts \
     '-ignore-remote-version' \
+    $__tofu_var_opts \
     ':resource:_tf_resource'
 }
 
 _tofu-untaint() {
   _arguments \
     '-allow-missing[Succeed even if the resource is missing]' \
-    '-lock=[Lock the state file]: :(false true)' \
-    '-lock-timeout=[Duration to retry a state lock]:timeout' \
+    $__tofu_lock_opts \
     '-ignore-remote-version' \
+    $__tofu_var_opts \
     ':resource:_tf_resource'
 }
 
 _tofu-validate() {
-  _arguments '-json[Print output as JSON]' '-no-color[suppress color output]'
+    _arguments \
+        $__tofu_warning_opts \
+        '-json' \
+        '-no-color' \
+        '-no-tests' \
+        '-test-directory=:path:_files -/' \
+        $__tofu_var_opts
 }
 
 _tofu-workspace() {
@@ -260,24 +310,34 @@ _tofu-workspace() {
     cmd=${words[2]}
     compset -n 2
     case $cmd in
-      (new|delete)
+      (new)
         _arguments \
-          '-lock=[Lock the state file]: :(false true)' \
-          '-lock-timeout=[Duration to retry a state lock]:timeout' \
-          ':name' '::dir:_files -/'
+            $__tofu_lock_opts \
+            $__tofu_var_opts \
+            ':name'
+        ;;
+      (delete)
+        _arguments \
+            $__tofu_lock_opts \
+            $__tofu_var_opts \
+            '-force' \
+            ':name'
         ;;
       (list)
-        [[ $CURRENT -eq 2 ]] && _files -/
+        _arguments $__tofu_var_opts
         ;;
       (select)
-        _arguments ':name' '::dir:_files -/'
+        _arguments \
+            $__tofu_var_opts \
+            '-or-create=: :(true false)' \
+            ':name'
         ;;
     esac
   fi
 }
 
 _tofu-force-unlock() {
-  _arguments '-force[Skip confirmation input]' ':lock-id'
+  _arguments $__tofu_var_opts '-force[Skip confirmation input]' ':lock-id'
 }
 
 _tofu-state() {
@@ -310,8 +370,7 @@ _tofu-state-list() {
 _tofu-state-mv() {
   _arguments \
     '-dry-run[Print out what would be moved without actually moving anything]' \
-    '-lock=[Lock the state files]: :(false true)' \
-    '-lock-timeout=[Duration to retry a state lock]:timeout' \
+    $__tofu_lock_opts \
     '-ignore-remote-version' \
     ':source:_tf_resource' ':destination:_tf_resource'
 }
@@ -319,16 +378,14 @@ _tofu-state-mv() {
 _tofu-state-push() {
   _arguments \
     '-force[Force writing state regardless of lineage]' \
-    '-lock=[Lock the state file]: :(false true)' \
-    '-lock-timeout=[Duration to retry a state lock]:timeout' \
+    $__tofu_lock_opts \
     ':path:_files'
 }
 
 _tofu-state-rm() {
   _arguments \
     '-dry-run[Print out what would be removed without actually removing anything]' \
-    '-lock=[Lock the state files]: :(false true)' \
-    '-lock-timeout=[Duration to retry a state lock]:timeout' \
+    $__tofu_lock_opts \
     '-ignore-remote-version' \
     '*:address:_tf_resource'
 }
@@ -340,8 +397,7 @@ _tofu-state-show() {
 _tofu-replace-provider() {
   _arguments \
     '-auto-approve[Skip interactive approval of plan before applying]' \
-    '-lock=[Lock the state files]: :(false true)' \
-    '-lock-timeout=[Duration to retry a state lock]:timeout' \
+    $__tofu_lock_opts \
     '-ignore-remote-version' \
     ':from-provider-fqdn' ':to-provider-fqdn'
 }
@@ -351,7 +407,7 @@ _tofu() {
   integer ret=1
   typeset -A opt_args
   _arguments -C '(- :)-version' '(-)-help' \
-    '-chdir=[Switch to different working directory]:dir:_files -/' \
+    '-chdir=-[Switch to different working directory]:dir:_files -/' \
     '1:command:_tofu_cmds' \
     '*:: :->args' && ret=0
 
