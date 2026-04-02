@@ -1,53 +1,53 @@
-#compdef terraform
+#compdef tofu
 
 # Potential improvements:
 # - Better completion for plan files
-# - Better completion for terraform config directories?
+# - Better completion for tofu config directories?
 # - Completion for resources
 # - completion for variables?
 
-_terraform_cmds() {
+_tofu_cmds() {
   local cmds=(
-    'init:Initialize a Terraform working directory'
-    'validate:Validates the Terraform files'
+    'init:Initialize a working directory'
+    'validate:Validates the tf files'
     'plan:Generate and show an execution plan'
     'apply:Builds or changes infrastructure'
-    'destroy:Destroy Terraform-managed infrastructure'
+    'destroy:Destroy tofu-managed infrastructure'
 
-    'console:Interactive console for Terraform interpolations'
+    'console:Interactive console for tofu expressions'
     'fmt:Rewrites config files to canonical format'
     'force-unlock:Release a stuck lock on the current workspace'
     'get:Download and install modules for the configuration'
-    'graph:Create a visual graph of Terraform resources'
-    'import:Import existing infrastructure into Terraform'
+    'graph:Create a visual graph of resources'
+    'import:Import existing infrastructure into OpenTofu'
     'login:Obtain and save credentials for a remote host'
     'logout:Remove locally stored credentials for a remote host'
     'output:Read an output from a state file'
     'providers:Prints a tree of the providers used in the configuration'
     'refresh:Update local state file against real resources'
-    'show:Inspect Terraform state or plan'
+    'show:Inspect state or plan'
     'state:Advanced state management'
     'taint:Manually mark a resource for recreation'
     'untaint:Manually unmark a resource as tainted'
-    'version:Prints the Terraform version'
+    'version:Prints the version'
     'workspace:Workspace management'
   )
-  _describe -t commands 'common terraform commands' cmds "$@"
+  _describe -t commands 'common tofu commands' cmds "$@"
 }
 
-_terraform_resource() {
+_tf_resource() {
   # TODO: do actual completion here
-  _message "Terraform resource address"
+  _message "OpenTofu resource address"
 }
 
-_terraform-apply() {
+_tofu-apply() {
   _arguments \
     '(:)-destroy[Destroy all resources]' \
     '(:)-refresh-only[Only update state to match remote resources]' \
     '(:)-refresh=[Update state prior to checking for differences]: :(false true)' \
-    '(:)*-replace=[Force replacement of a resource]:resource:_terraform_resource' \
-    '(:)*-target=[Resource to target]:resource:_terraform_resource' \
-    '(:)*-var=[Set a variable in the Terraform configuration]:assignment' \
+    '(:)*-replace=[Force replacement of a resource]:resource:_tofu_resource' \
+    '(:)*-target=[Resource to target]:resource:_tf_resource' \
+    '(:)*-var=[Set a variable in the configuration]:assignment' \
     '(:)-var-file=[Set variables in the configuration from a file]:path:_files' \
     '-auto-approve[Skip interactive approval of plan before applying]' \
     '-compact-warnings[Show warnings in more compact form]' \
@@ -59,17 +59,17 @@ _terraform-apply() {
     '::plan-file:_files'
 }
 
-_terraform-console() {
+_tofu-console() {
   _arguments \
     '-var=[Set a variable in the configuration]:assignment' \
     '-var-file=[Set variables from a file]:path:_files'
 }
 
-_terraform-destroy() {
+_tofu-destroy() {
   _arguments \
     '-refresh=[Update state prior to checking for differences]: :(false true)' \
-    '*-target=[Resource to target]:resource:_terraform_resource' \
-    '*-var=[Set a variable in the Terraform configuration]:assignment' \
+    '*-target=[Resource to target]:resource:_tf_resource' \
+    '*-var=[Set a variable in the configuration]:assignment' \
     '-var-file=[Set variables in the configuration from a file]:path:_files' \
     '-auto-approve[Skip interactive approval of plan before applying]' \
     '-compact-warnings[Show warnings in more compact form]' \
@@ -80,7 +80,7 @@ _terraform-destroy() {
     '-parallelism=[Limit the number of parallel resource operations]:n' \
 }
 
-_terraform-fmt() {
+_tofu-fmt() {
   _arguments \
     "-list=[Whether to list files whose formatting differs]: :(false true)" \
     '-write=[Whether to write to source files]: :(false true)' \
@@ -90,13 +90,13 @@ _terraform-fmt() {
     '*::target:_files'
 }
 
-_terraform-get() {
+_tofu-get() {
   _arguments \
     '-update[Check already-downloaded modules for available updates]' \
     '-no-color[Disable text coloring in the output]'
 }
 
-_terraform-graph() {
+_tofu-graph() {
   _arguments \
     '-plan=[Use specified plan file]:tfplan:_files' \
     '-draw-cycles[Highlight any cycles in the graph]' \
@@ -104,7 +104,7 @@ _terraform-graph() {
     '-type=[Type of graph to output]:type:(plan plan-destroy apply validate input refresh)'
 }
 
-_terraform-import() {
+_tofu-import() {
   _arguments \
     '-config=[Path to config directory]:path:_files -/' \
     '-allow-missing-config[Allow import when no resource configuration exists]' \
@@ -112,14 +112,14 @@ _terraform-import() {
     '-lock=[Lock the state file]: :(false true)' \
     '-lock-timeout=[Duration to retry a state lock]:timeout' \
     '-no-color[Suppress color in output]' \
-    '*-var=[Set a variable in the Terraform configuration]:assignment' \
+    '*-var=[Set a variable in the configuration]:assignment' \
     '-var-file=[Set variables in the configuration from a file]:path:_files' \
     '-ignore-remote-version' \
-    ':resource:_terraform_resource' \
+    ':resource:_tf_resource' \
     ':id'
 }
 
-_terraform-init() {
+_tofu-init() {
   _arguments \
     '-backend=[Configure backend]: :(false true)' \
     '*-backend-config=[Override for backend configuration]: : _alternative path\:path\:_files assignment\:assignment' \
@@ -138,29 +138,29 @@ _terraform-init() {
     '-ignore-remote-version[Ignore checking that local and remote versions are compatible]'
 }
 
-_terraform-login() {
+_tofu-login() {
   _arguments '::hostname:'
 }
 
-_terraform-logout() {
+_tofu-logout() {
   _arguments '::hostname:'
 }
 
-_terraform-output() {
+_tofu-output() {
   _arguments \
     '-no-color[Suppress color in output' \
     '-raw[Print raw string directly if possible]' \
     ':output'
 }
 
-_terraform-plan() {
+_tofu-plan() {
   _arguments \
     '-destroy[Generate plan to destroy all resources]' \
     '-refresh-only[Just check that remote objects match current state]' \
     '-refresh=[Update state prior to checking for differences]: :(false true)' \
-    '*-replace=[Force replacement of a resource]:resource:_terraform_resource' \
-    '*-target=[Resource to target]:resource:_terraform_resource' \
-    '*-var=[Set a variable in the Terraform configuration]:assignment' \
+    '*-replace=[Force replacement of a resource]:resource:_tf_resource' \
+    '*-target=[Resource to target]:resource:_tf_resource' \
+    '*-var=[Set a variable in the configuration]:assignment' \
     '-var-file=[Set variables in the configuration from a file]:path:_files' \
     '-compact-warnings[Show warnings in more compact form]' \
     '-detailed-exitcode[Return detailed exit codes when command exits]' \
@@ -172,7 +172,7 @@ _terraform-plan() {
     '-parallelism=[Limit the number of parallel resource operations]:n'
 }
 
-_terraform-providers() {
+_tofu-providers() {
   local context state state_descr line
   integer ret=1
   typeset -A opt_args
@@ -205,48 +205,48 @@ _terraform-providers() {
   return ret
 }
 
-_terraform-refresh() {
+_tofo-refresh() {
   _arguments \
     '-compact-warnings[Show warnings in more compact form]' \
     '-input=[Ask for input for variables if not directly set]: :(false true)' \
     '-lock=[Lock the state file]: :(false true)' \
     '-lock-timeout=[Duration to retry a state lock]:timeout' \
     '-no-color[Suppress color in output]' \
-    '*-target=[Resource to target]:resource:_terraform_resource' \
-    '*-var=[Set a variable in the Terraform configuration]:assignment' \
+    '*-target=[Resource to target]:resource:_tf_resource' \
+    '*-var=[Set a variable in the configuration]:assignment' \
     '-var-file=[Set variables in the configuration from a file]:path:_files'
 }
 
-_terraform-show() {
+_tofu-show() {
   _arguments \
     '-no-color[Suppres color in output]' \
     '-json[Print output as JSON]' \
     '::path:_files'
 }
 
-_terraform-taint() {
+_tofu-taint() {
   _arguments \
     '-allow-missing[Succeed even if the resource is missing]' \
     '-lock=[Lock the state file]: :(false true)' \
     '-lock-timeout=[Duration to retry a state lock]:timeout' \
     '-ignore-remote-version' \
-    ':resource:_terraform_resource'
+    ':resource:_tf_resource'
 }
 
-_terraform-untaint() {
+_tofu-untaint() {
   _arguments \
     '-allow-missing[Succeed even if the resource is missing]' \
     '-lock=[Lock the state file]: :(false true)' \
     '-lock-timeout=[Duration to retry a state lock]:timeout' \
     '-ignore-remote-version' \
-    ':resource:_terraform_resource'
+    ':resource:_tf_resource'
 }
 
-_terraform-validate() {
+_tofu-validate() {
   _arguments '-json[Print output as JSON]' '-no-color[suppress color output]'
 }
 
-_terraform-workspace() {
+_tofu-workspace() {
   if [[ $CURRENT -eq 2 ]]; then
     local cmds=(
       'delete:Delete a workspace'
@@ -276,11 +276,11 @@ _terraform-workspace() {
   fi
 }
 
-_terraform-force-unlock() {
+_tofu-force-unlock() {
   _arguments '-force[Skip confirmation input]' ':lock-id'
 }
 
-_terraform-state() {
+_tofu-state() {
   local context curcontext="$curcontext" state state_descr line
   integer ret=1
   typeset -A opt_args
@@ -295,28 +295,28 @@ _terraform-state() {
   )
   _arguments -C ":subcommand: _describe subcommand subcommands" '*:: :->args' && ret=0
   if [[ $state = args ]]; then
-    curcontext="${curcontext%:*:*}:terraform-state-$line[1]:"
-    _call_function ret _terraform-state-${line[1]} && ret=0
+    curcontext="${curcontext%:*:*}:tofu-state-$line[1]:"
+    _call_function ret _tofu-state-${line[1]} && ret=0
   fi
   return ret
 }
 
-_terraform-state-list() {
+_tofu-state-list() {
   _arguments \
     '-id=[Filter the results by id of instances]:ID' \
-    '*:address:_terraform_resource'
+    '*:address:_tf_resource'
 }
 
-_terraform-state-mv() {
+_tofu-state-mv() {
   _arguments \
     '-dry-run[Print out what would be moved without actually moving anything]' \
     '-lock=[Lock the state files]: :(false true)' \
     '-lock-timeout=[Duration to retry a state lock]:timeout' \
     '-ignore-remote-version' \
-    ':source:_terraform_resource' ':destination:_terraform_resource'
+    ':source:_tf_resource' ':destination:_tf_resource'
 }
 
-_terraform-state-push() {
+_tofu-state-push() {
   _arguments \
     '-force[Force writing state regardless of lineage]' \
     '-lock=[Lock the state file]: :(false true)' \
@@ -324,20 +324,20 @@ _terraform-state-push() {
     ':path:_files'
 }
 
-_terraform-state-rm() {
+_tofu-state-rm() {
   _arguments \
     '-dry-run[Print out what would be removed without actually removing anything]' \
     '-lock=[Lock the state files]: :(false true)' \
     '-lock-timeout=[Duration to retry a state lock]:timeout' \
     '-ignore-remote-version' \
-    '*:address:_terraform_resource'
+    '*:address:_tf_resource'
 }
 
-_terraform-state-show() {
-  _arguments ':address:_terraform_resource'
+_tofu-state-show() {
+  _arguments ':address:_tf_resource'
 }
 
-_terraform-replace-provider() {
+_tofu-replace-provider() {
   _arguments \
     '-auto-approve[Skip interactive approval of plan before applying]' \
     '-lock=[Lock the state files]: :(false true)' \
@@ -346,22 +346,22 @@ _terraform-replace-provider() {
     ':from-provider-fqdn' ':to-provider-fqdn'
 }
 
-_terraform() {
+_tofu() {
   local context curcontext="$curcontext" state state_descr line
   integer ret=1
   typeset -A opt_args
   _arguments -C '(- :)-version' '(-)-help' \
     '-chdir=[Switch to different working directory]:dir:_files -/' \
-    '1:command:_terraform_cmds' \
+    '1:command:_tofu_cmds' \
     '*:: :->args' && ret=0
 
   if [[ $state = args ]]; then
-    curcontext="${curcontext%:*:*}:terraform-$line[1]:"
-    _call_function ret _terraform-${line[1]} && ret=0
+    curcontext="${curcontext%:*:*}:tofu-$line[1]:"
+    _call_function ret _tofu-${line[1]} && ret=0
     (( ret )) && _message "no more arguments"
   fi
 
   return ret
 }
 
-_terraform "$@"
+_tofu "$@"
