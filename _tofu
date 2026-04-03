@@ -364,6 +364,8 @@ _tofu-state() {
 _tofu-state-list() {
   _arguments \
     '-id=[Filter the results by id of instances]:ID' \
+    $__tofu_var_opts \
+    '-state=:statefile:_files' \
     '*:address:_tf_resource'
 }
 
@@ -372,6 +374,7 @@ _tofu-state-mv() {
     '-dry-run[Print out what would be moved without actually moving anything]' \
     $__tofu_lock_opts \
     '-ignore-remote-version' \
+    $__tofu_var_opts \
     ':source:_tf_resource' ':destination:_tf_resource'
 }
 
@@ -379,7 +382,12 @@ _tofu-state-push() {
   _arguments \
     '-force[Force writing state regardless of lineage]' \
     $__tofu_lock_opts \
+    $__tofu_var_opts \
     ':path:_files'
+}
+
+_tofu-state-pull() {
+    _arguments $__tofu_var_opts
 }
 
 _tofu-state-rm() {
@@ -387,11 +395,16 @@ _tofu-state-rm() {
     '-dry-run[Print out what would be removed without actually removing anything]' \
     $__tofu_lock_opts \
     '-ignore-remote-version' \
+    $__tofu_var_opts \
     '*:address:_tf_resource'
 }
 
 _tofu-state-show() {
-  _arguments ':address:_tf_resource'
+  _arguments \
+      $__tofu_var_opts \
+      -show-sensitive \
+      '-state=:statefile:_files' \
+      ':address:_tf_resource'
 }
 
 _tofu-replace-provider() {
@@ -399,6 +412,7 @@ _tofu-replace-provider() {
     '-auto-approve[Skip interactive approval of plan before applying]' \
     $__tofu_lock_opts \
     '-ignore-remote-version' \
+    $__tofu_var_opts \
     ':from-provider-fqdn' ':to-provider-fqdn'
 }
 
